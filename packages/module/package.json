@@ -1,0 +1,9 @@
+{
+  "name": "all-hail-hades-module",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^1.0.0",
+    "@safe-global/safe-contracts": "^1.4.1-build.0",
+    "dotenv": "^16.3.1",
+    "hardhat": "^2.18.1"
+  }
+}
