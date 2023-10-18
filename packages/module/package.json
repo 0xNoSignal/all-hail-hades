@@ -5,7 +5,9 @@
     "hardhat": "^2.18.1"
   },
   "dependencies": {
-    "@safe-global/safe-contracts": "^1.4.1-build.0"
+    "@safe-global/safe-contracts": "^1.4.1-build.0",
+    "@safe-global/safe-singleton-factory": "github:safe-global/safe-singleton-factory",
+    "ethers": "^6.8.0"
   },
   "scripts": {
     "test": "hardhat test",
