@@ -2,8 +2,10 @@
 pragma solidity ^0.8.9;
 import "@safe-global/safe-contracts/contracts/Safe.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
-contract AllHailHades {
+contract AllHailHades is EIP712 {
     string public constant NAME = "AllHailHades";
     string public constant VERSION = "0.1.0";
 
@@ -23,16 +25,6 @@ contract AllHailHades {
         address safe;
         uint256 nonce;
     }
-
-    bytes32 DOMAIN_SEPARATOR;
-
-    bytes32 constant WILL_TYPEHASH =
-        keccak256("Will(address heir, address safe, uint256 nonce)");
-
-    bytes32 constant EIP712DOMAIN_TYPEHASH =
-        keccak256(
-            "EIP712Domain(string name, string version, uint256 chainId, address verifyingContract)"
-        );
 
     struct Will {
         address heir;
@@ -61,16 +53,7 @@ contract AllHailHades {
         uint256 nonce
     );
 
-    constructor() {
-        DOMAIN_SEPARATOR = hash(
-            EIP712Domain({
-                name: NAME,
-                version: VERSION,
-                chainId: block.chainid,
-                verifyingContract: address(this)
-            })
-        );
-    }
+    constructor() EIP712(NAME, VERSION) {}
 
     function abortInhertiance(address _safe) public {
         Will storage will = wills[msg.sender][_safe];
@@ -133,8 +116,6 @@ contract AllHailHades {
         // require(Safe(_safe).isModuleEnabled(address(this)), "Module disabled");
         Will storage will = wills[_deceased][_safe];
 
-        console.log(getSigner(will.heir, _safe, will.nonce, _signature));
-        console.log(_deceased);
         //Checks
         require(
             getSigner(will.heir, _safe, will.nonce, _signature) == _deceased,
@@ -172,131 +153,17 @@ contract AllHailHades {
         uint256 nonce,
         bytes memory _signature
     ) internal view returns (address) {
-        string
-            memory EIP712_DOMAIN_TYPE = "EIP712Domain(string name, string version, uint256 chainId, address verifyingContract)";
-        string
-            memory WILL_TYPE = "Will(address heir, address safe, uint256 nonce)";
-
-        console.log(">>>");
-        console.log(">", WILL_TYPE);
-        console.log(">", EIP712_DOMAIN_TYPE);
-        console.log("chainId", block.chainid);
-        console.log("verifyingContract", address(this));
-        console.log("nonce", nonce);
-        console.log("heir", heir);
-        console.log("safe", safe);
-        console.log("NAME", NAME);
-        console.log("VERSION", VERSION);
-        bytes32 DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256(abi.encodePacked(EIP712_DOMAIN_TYPE)),
-                keccak256(abi.encodePacked(NAME)),
-                keccak256(abi.encodePacked(VERSION)),
-                block.chainid,
-                address(this)
-            )
-        );
-
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                DOMAIN_SEPARATOR,
-                keccak256(
-                    abi.encode(
-                        keccak256(abi.encodePacked(WILL_TYPE)),
-                        heir,
-                        safe,
-                        nonce
-                    )
-                )
-            )
-        );
-
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        if (_signature.length != 65) {
-            return address(0);
-        }
-        assembly {
-            r := mload(add(_signature, 32))
-            s := mload(add(_signature, 64))
-            v := byte(0, mload(add(_signature, 96)))
-        }
-        if (v < 27) {
-            v += 27;
-        }
-        if (v != 27 && v != 28) {
-            return address(0);
-        } else {
-            return ecrecover(digest, v, r, s);
-        }
-    }
-
-    // function getSigner(
-    //     address heir,
-    //     address safe,
-    //     uint256 nonce,
-    //     bytes memory _signature
-    // ) internal view returns (address) {
-    //     console.log(">>>");
-
-    //     console.log("chainId", block.chainid);
-    //     console.log("verifyingContract", address(this));
-    //     console.log("nonce", nonce);
-    //     console.log("heir", heir);
-    //     console.log("safe", safe);
-    //     console.log("NAME", NAME);
-    //     console.log("VERSION", VERSION);
-    //     bytes32 digest = keccak256(
-    //         abi.encodePacked(
-    //             "\x19\x01",
-    //             DOMAIN_SEPARATOR,
-    //             hash(Wills({heir: heir, safe: safe, nonce: nonce}))
-    //         )
-    //     );
-
-    //     bytes32 r;
-    //     bytes32 s;
-    //     uint8 v;
-    //     if (_signature.length != 65) {
-    //         return address(0);
-    //     }
-    //     assembly {
-    //         r := mload(add(_signature, 32))
-    //         s := mload(add(_signature, 64))
-    //         v := byte(0, mload(add(_signature, 96)))
-    //     }
-    //     if (v < 27) {
-    //         console.log("NOPE");
-    //         v += 27;
-    //     }
-    //     if (v != 27 && v != 28) {
-    //         return address(0);
-    //     } else {
-    //         return ecrecover(digest, v, r, s);
-    //     }
-    // }
-
-    function hash(Wills memory will) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(WILL_TYPEHASH, will.heir, will.safe, will.nonce)
-            );
-    }
-
-    function hash(
-        EIP712Domain memory eip712Domain
-    ) internal pure returns (bytes32) {
-        return
+        bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
-                    EIP712DOMAIN_TYPEHASH,
-                    keccak256(bytes(eip712Domain.name)),
-                    keccak256(bytes(eip712Domain.version)),
-                    eip712Domain.chainId,
-                    eip712Domain.verifyingContract
+                    keccak256("Will(address heir,address safe,uint256 nonce)"),
+                    heir,
+                    safe,
+                    nonce
                 )
-            );
+            )
+        );
+        address signer = ECDSA.recover(digest, _signature);
+        return signer;
     }
 }
