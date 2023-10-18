@@ -4,11 +4,38 @@ import styles from "@/styles/Home.module.css";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { signTypedData } from "@wagmi/core";
 import { domain, message, types } from "@/utils";
+import SafeApiKit from "@safe-global/api-kit";
+import { useEthersProvider } from "@/hooks/ethers";
+import { EthersAdapter } from "@safe-global/protocol-kit";
+import { ethers } from "ethers";
+import { useAccount } from "wagmi";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const { open } = useWeb3Modal();
+  const { address } = useAccount();
+  const provider = useEthersProvider({ chainId: 1 });
+
+  const infuraProvider = ethers.getDefaultProvider("homestead", {
+    infura: "https://mainnet.infura.io/v3/31a1879c790c5a01028f8eb0571096df",
+  });
+
+  const ethAdapter = new EthersAdapter({
+    signerOrProvider: infuraProvider,
+    ethers,
+  });
+
+  const safeService = new SafeApiKit({
+    txServiceUrl: "https://safe-transaction-mainnet.safe.global",
+    ethAdapter,
+  });
+
+  if (address) {
+    const test = safeService.getSafesByOwner(address).then((res) => {
+      console.log(res, "safe results");
+    });
+  }
 
   const signMessageAction = async () => {
     const signature = await signTypedData({
