@@ -15,7 +15,6 @@ const inter = Inter({ subsets: ["latin"] });
 export default function Home() {
   const { open } = useWeb3Modal();
   const { address } = useAccount();
-  const provider = useEthersProvider({ chainId: 1 });
 
   const infuraProvider = ethers.getDefaultProvider("homestead", {
     infura: "https://mainnet.infura.io/v3/31a1879c790c5a01028f8eb0571096df",
