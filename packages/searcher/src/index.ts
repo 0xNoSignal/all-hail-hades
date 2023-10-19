@@ -14,14 +14,15 @@ async function encryptText(text: string) {
 
     const accessControlConditions = [
       {
-        contractAddress: "",
-        standardContractType: "",
+        contractAddress:
+          "ipfs://QmTctzQiRG3wdzs9e5Proq2zKtC8ShrrsAYrQqRSJNsUrZ",
+        standardContractType: "LitAction",
         chain: "ethereum",
-        method: "eth_getBalance",
-        parameters: [":userAddress", "latest"],
+        method: "go",
+        parameters: ["40"],
         returnValueTest: {
-          comparator: ">=",
-          value: "1000000000000", // 0.000001 ETH
+          comparator: "=",
+          value: "true",
         },
       },
     ];

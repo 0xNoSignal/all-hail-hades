@@ -2,20 +2,48 @@ import Head from "next/head";
 import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
-import { signTypedData } from "@wagmi/core";
+import {
+  WalletClient,
+  getAccount,
+  getWalletClient,
+  prepareWriteContract,
+  readContract,
+  signTypedData,
+  writeContract,
+} from "@wagmi/core";
 import { domain, message, types } from "@/utils";
 import SafeApiKit from "@safe-global/api-kit";
 import { useEthersProvider } from "@/hooks/ethers";
 import { EthersAdapter } from "@safe-global/protocol-kit";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
+import { useEffect, useMemo, useState } from "react";
+import * as LitJsSdk from "@lit-protocol/lit-node-client";
+import * as helpers from "../helpers";
+import { parseEther } from "viem";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const ENCRYPTED_MESSAGE = "Hello World";
+const SAFE_ADDRESS = "0x6617a5D85F6960f72a78A89Edce080184360D54F";
+const MODULE_ADDRESS = "0xdfb72936feaca3255d4f2d967680930158d75c42";
+const RANDOM_HEIR = "0xC3a2580b2eeA35d1e56B655F176c1Eb10CDae51a";
+
 export default function Home() {
-  const { open } = useWeb3Modal();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const provider = useEthersProvider({ chainId: 1 });
+  const [heir, setHeir] = useState<string>();
+  const [timeframe, setTimeframe] = useState<number>();
+
+  const litNodeClient = useMemo(
+    () =>
+      new LitJsSdk.LitNodeClient({
+        litNetwork: "cayenne",
+      }),
+    []
+  );
+
+  litNodeClient.connect();
 
   const infuraProvider = ethers.getDefaultProvider("homestead", {
     infura: "https://mainnet.infura.io/v3/31a1879c790c5a01028f8eb0571096df",
@@ -37,13 +65,82 @@ export default function Home() {
     });
   }
 
-  const signMessageAction = async () => {
-    const signature = await signTypedData({
-      domain,
-      message,
-      primaryType: "Inheritance",
-      types,
+  const setInhertiance = async () => {
+    const nonce = (await readContract({
+      address: MODULE_ADDRESS,
+      abi: helpers.ALL_HAIL_HADES_ABI,
+      functionName: "getNonce",
+      args: [address, SAFE_ADDRESS],
+    })) as bigint;
+
+    console.log("nonce", nonce);
+
+    if (!address) {
+      throw new Error("No address");
+    }
+
+    if (!heir) {
+      throw new Error("No heir");
+    }
+    const walletClient = (await getWalletClient()) as WalletClient;
+
+    const signature = await helpers.sign(
+      walletClient, // This should be your WalletClient
+      MODULE_ADDRESS, // Assuming `allHailHades` is the deployed contract instance
+      address, // The address of the owner, assuming `owner` is a Signer
+      SAFE_ADDRESS,
+      heir as `0x${string}`, // The heir's address
+      nonce
+    );
+
+    console.log("signature", signature);
+
+    const chain = "ethereum";
+    const authSig = await LitJsSdk.checkAndSignAuthMessage({
+      chain,
     });
+
+    const accessControlConditions = [
+      {
+        contractAddress:
+          "ipfs://QmTctzQiRG3wdzs9e5Proq2zKtC8ShrrsAYrQqRSJNsUrZ",
+        standardContractType: "LitAction",
+        chain: "ethereum",
+        method: "go",
+        parameters: ["40"],
+        returnValueTest: {
+          comparator: "=",
+          value: "true",
+        },
+      },
+    ];
+    const { ciphertext, dataToEncryptHash } = await LitJsSdk.encryptString(
+      {
+        accessControlConditions,
+        authSig,
+        chain,
+        dataToEncrypt: signature,
+      },
+      litNodeClient
+    );
+
+    console.log("ciphertext", ciphertext);
+    console.log("dataToEncryptHash", dataToEncryptHash);
+
+    if (!timeframe) {
+      throw new Error("No timeframe");
+    }
+
+    const { request } = await prepareWriteContract({
+      address: MODULE_ADDRESS,
+      abi: helpers.ALL_HAIL_HADES_ABI,
+      functionName: "setInhertance",
+      args: [SAFE_ADDRESS, heir, timeframe, ciphertext, dataToEncryptHash],
+      value: parseEther("0.0001"),
+    });
+    const { hash } = await writeContract(request);
+
+    console.log("hash", hash);
   };
 
   return (
@@ -55,15 +152,33 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={`${styles.main} ${inter.className}`}>
-        <div className={styles.description}>
-          <p>Authenitcate yourself...</p>
-        </div>
-        <div className={styles.grid}>
-          <button onClick={() => open()}>Open Connect Modal</button>
-        </div>
-        <div className={styles.grid}>
-          <button onClick={() => signMessageAction()}>Sign message</button>
-        </div>
+        <w3m-button />
+        {isConnected && (
+          <div className={styles.grid}>
+            <div>
+              <h3>Set Inhertiance</h3>
+              <label>HEIR:</label>
+              <input
+                placeholder="heir"
+                onChange={(e) => {
+                  setHeir(e?.target?.value);
+                }}
+              ></input>
+            </div>
+            <div>
+              <label>Timeframe after considered dead:</label>
+              <i>in seconds</i>
+              <input
+                placeholder="Timeframe"
+                type="number"
+                onChange={(e) => {
+                  setTimeframe(Number(e?.target?.value));
+                }}
+              ></input>
+            </div>
+            <button onClick={setInhertiance}>Set Inhertiance</button>
+          </div>
+        )}
       </main>
     </>
   );

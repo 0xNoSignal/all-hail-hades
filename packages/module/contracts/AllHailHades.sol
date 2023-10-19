@@ -1,9 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
-import "@safe-global/safe-contracts/contracts/Safe.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+
+interface Safe {
+    function isModuleEnabled(address module) external view returns (bool);
+
+    function swapOwner(
+        address prevOwner,
+        address oldOwner,
+        address newOwner
+    ) external;
+}
 
 contract AllHailHades is EIP712 {
     string public constant NAME = "AllHailHades";
@@ -41,7 +50,9 @@ contract AllHailHades is EIP712 {
         uint256 tip,
         uint256 timeframe,
         uint256 nonce,
-        uint256 startedAt
+        uint256 startedAt,
+        string ciphertext,
+        string dataToEncryptHash
     );
 
     event AbortWill(
@@ -81,7 +92,9 @@ contract AllHailHades is EIP712 {
     function setInhertance(
         address _safe,
         address _heir,
-        uint256 _timeframe
+        uint256 _timeframe,
+        string memory ciphertext,
+        string memory dataToEncryptHash
     ) public payable {
         require(
             wills[msg.sender][_safe].nonce < userNonce[msg.sender][_safe] ||
@@ -104,7 +117,9 @@ contract AllHailHades is EIP712 {
             msg.value,
             _timeframe,
             userNonce[msg.sender][_safe],
-            block.timestamp
+            block.timestamp,
+            ciphertext,
+            dataToEncryptHash
         );
     }
 
