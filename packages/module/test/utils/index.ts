@@ -30,15 +30,6 @@ export const sign = async (
     nonce: nonce,
   } as const;
 
-  console.log({
-    domain,
-    message,
-    primaryType: "Will",
-    types,
-    account: accountAddress,
-  });
-  console.log(types);
-
   return walletClient.signTypedData({
     domain,
     message,

@@ -1,37 +1,14 @@
 import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
-import hre from "hardhat";
-import { getAddress, WalletClient } from "viem";
-import { sign, signEthers } from "./utils";
-import { setupFixture } from "./test-helpers/setup";
-import { BrowserProvider, JsonRpcSigner } from "ethers";
-
-function walletClientToSigner(walletClient: WalletClient) {
-  const { account, chain, transport } = walletClient;
-  const network = {
-    chainId: chain?.id,
-    name: chain?.name,
-    ensAddress: chain?.contracts?.ensRegistry?.address,
-  };
-  const provider = new BrowserProvider(transport, network);
-  const signer = new JsonRpcSigner(provider, account?.address as string);
-  return signer;
-}
+import { getAddress } from "viem";
+import { sign } from "./utils";
+import { setupFixturesWithFakeSafe } from "./safe/setup";
 
 describe("AllHailHades", function () {
-  // async function setupFixture() {
-  //   const [owner, heir, otherAccount] = await hre.viem.getWalletClients();
-
-  //   const allHailHades = await hre.viem.deployContract("AllHailHades");
-  //   const publicClient = await hre.viem.getPublicClient();
-
-  //   return { allHailHades, owner, heir, otherAccount, publicClient };
-  // }
-
   describe("Set Inheritance", function () {
     it("Should allow a user to set inheritance", async function () {
       const { allHailHades, owner, heir, publicClient, iSafe } =
-        await loadFixture(setupFixture);
+        await loadFixture(setupFixturesWithFakeSafe);
 
       const timeframe = BigInt((await time.latest()) + 1000);
       const txHash = await allHailHades.write.setInhertance(
@@ -51,7 +28,9 @@ describe("AllHailHades", function () {
       const event = willSetEvents[0];
       expect(event.args.heir).to.equal(getAddress(heir.account.address));
       expect(event?.args?.tip).to.equal(1000000000000000000n);
-      expect(event?.args?.safe).to.equal(iSafe.address);
+      expect(getAddress(event?.args?.safe as string)).to.equal(
+        getAddress(iSafe.address as string)
+      );
       expect(event?.args?.nonce).to.equal(1n);
       expect(event?.args?.timeframe).to.equal(timeframe);
       expect(event?.args?.owner).to.equal(getAddress(owner.account.address));
@@ -61,7 +40,7 @@ describe("AllHailHades", function () {
   describe("Abort Inheritance", () => {
     it("Should allow a user to abort inheritance by increasing nonce", async () => {
       const { allHailHades, owner, heir, publicClient, iSafe } =
-        await loadFixture(setupFixture);
+        await loadFixture(setupFixturesWithFakeSafe);
 
       const timeframe = BigInt((await time.latest()) + 1000);
       await allHailHades.write.setInhertance(
@@ -90,10 +69,10 @@ describe("AllHailHades", function () {
   describe("Execute Will", function () {
     it("Should allow the heir to claim inheritance after 1 day with a valid signature", async function () {
       const { allHailHades, owner, heir, publicClient, iSafe, otherAccount } =
-        await loadFixture(setupFixture);
-
+        await loadFixture(setupFixturesWithFakeSafe);
+      const timenow = await time.latest();
       await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, BigInt(10 * 1000)],
+        [iSafe.address, heir.account.address, 10000n],
         {
           value: 1000000000000000000n, // 1 Ether
         }
@@ -101,7 +80,6 @@ describe("AllHailHades", function () {
 
       // Fast forward 1 day
       await time.increase(24 * 60 * 60 + 1 + 2000);
-
       // Create signature
       const nonce = await allHailHades.read.getNonce([
         owner.account.address,
@@ -116,22 +94,19 @@ describe("AllHailHades", function () {
         heir.account.address, // The heir's address
         nonce
       );
-
-      console.log("viem signature", signature);
-
-      const ethersOwner = await hre.viem.getWalletClient(owner.account.address);
-      const signer = walletClientToSigner(ethersOwner);
-
-      const ethersSignature = await signEthers(
-        signer, // This should be your WalletClient
-        allHailHades.address, // Assuming `allHailHades` is the deployed contract instance
-        owner.account.address, // The address of the owner, assuming `owner` is a Signer
+      expect(await iSafe.read.isOwner([owner.account.address])).to.be.true;
+      const wills = await allHailHades.read.wills([
+        owner.account.address,
         iSafe.address,
-        heir.account.address, // The heir's address
-        nonce
-      );
+      ]);
 
-      console.log("ethers signature", ethersSignature);
+      expect(getAddress(wills[0])).to.be.include(
+        getAddress(heir.account.address)
+      );
+      expect(Number(wills[1])).to.be.gte(1000000000000000000); // Test tip
+      expect(Number(wills[2])).to.be.gte(10000); // Test timeframe
+      expect(wills[3]).to.be.equal(nonce); // Test nonce
+      expect(Number(wills[4])).to.be.equal(timenow + 1); // Test block timestamp
 
       // Execute will
       const txHash = await allHailHades.write.executeWill(
@@ -140,59 +115,132 @@ describe("AllHailHades", function () {
       );
       await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-      // // Validate balances (optional)
-      // const otherAccountBalance = await publicClient.getBalance({
-      //   address: otherAccount.account.address,
-      // });
-      // expect(otherAccountBalance).to.be.gte(1000000000000000000); // Ensure heir received at least 1 Ether
+      // Validate balances (optional)
+      const otherAccountBalance = await publicClient.getBalance({
+        address: otherAccount.account.address,
+      });
+      expect(Number(otherAccountBalance)).to.be.gte(1000000000000000000); // Ensure heir received at least 1 Ether
+      expect(await iSafe.read.isOwner([owner.account.address])).to.be.false;
+      expect(await iSafe.read.isOwner([heir.account.address])).to.be.true;
+      // expect(
+      //   await allHailHades.read.wills([owner.account.address, iSafe.address])
+      // ).to.be.false;
     });
 
-    // it("Should reject if the signature is invalid", async function () {
-    //   const { allHailHades, owner, heir } = await setupFixture();
+    it("Should reject if the signature is invalid", async function () {
+      const { allHailHades, owner, heir, iSafe } = await loadFixture(
+        setupFixturesWithFakeSafe
+      );
 
-    //   await allHailHades.write.setInhertance(heir.account.address, {
-    //     value: 1000000000000000000n, // 1 Ether
-    //   });
+      await allHailHades.write.setInhertance(
+        [iSafe.address, heir.account.address, 10000n],
+        {
+          value: 1000000000000000000n, // 1 Ether
+        }
+      );
 
-    //   // Fast forward 1 day
-    //   await time.increase(24 * 60 * 60 + 1);
+      // Fast forward 1 day
+      await time.increase(24 * 60 * 60 + 1);
 
-    //   // Create an invalid signature
-    //   const invalidSignature = "0x" + "a".repeat(130); // An example of an invalid signature
+      const nonce = await allHailHades.read.getNonce([
+        owner.account.address,
+        iSafe.address,
+      ]);
+      // Create an invalid signature
+      const signature = await sign(
+        owner, // This should be your WalletClient
+        allHailHades.address, // Assuming `allHailHades` is the deployed contract instance
+        owner.account.address, // The address of the owner, assuming `owner` is a Signer
+        iSafe.address,
+        heir.account.address, // The heir's address
+        nonce
+      );
 
-    //   // Attempt to execute will
-    //   await expect(
-    //     allHailHades.write.executeWill(
-    //       invalidSignature,
-    //       owner.account.address,
-    //       { walletClient: heir }
-    //     )
-    //   ).to.be.rejectedWith("Invalid signature");
-    // });
+      const invalidSignature = (signature.slice(0, -2) + "00") as `0x${string}`;
 
-    // it("Should reject if it hasn't been 1 day yet", async function () {
-    //   const { allHailHades, owner, heir } = await setupFixture();
+      // Attempt to execute will
+      await expect(
+        allHailHades.write.executeWill(
+          [invalidSignature, owner.account.address, iSafe.address],
+          { account: heir.account }
+        )
+      ).to.be.rejected;
+    });
 
-    //   await allHailHades.write.setInhertance(heir.account.address, {
-    //     value: 1000000000000000000n, // 1 Ether
-    //   });
+    it("Should reject if it hasn't been 1 day yet", async function () {
+      const { allHailHades, owner, heir, iSafe } = await loadFixture(
+        setupFixturesWithFakeSafe
+      );
 
-    //   // Create signature (without fast forwarding time)
-    //   const nonce = await allHailHades.read.getNonce(owner.account.address);
-    //   const message = await hre.ethers.utils.solidityKeccak256(
-    //     ["address", "uint256"],
-    //     [heir.account.address, nonce]
-    //   );
-    //   const signature = await owner.signMessage(
-    //     hre.ethers.utils.arrayify(message)
-    //   );
+      await allHailHades.write.setInhertance(
+        [iSafe.address, heir.account.address, 10000n],
+        {
+          value: 1000000000000000000n, // 1 Ether
+        }
+      );
+      // Create signature (without fast forwarding time)
 
-    //   // Attempt to execute will
-    //   await expect(
-    //     allHailHades.write.executeWill(signature, owner.account.address, {
-    //       walletClient: heir,
-    //     })
-    //   ).to.be.rejectedWith("You must wait 1 day to claim");
-    // });
+      const nonce = await allHailHades.read.getNonce([
+        owner.account.address,
+        iSafe.address,
+      ]);
+      const signature = await sign(
+        owner, // This should be your WalletClient
+        allHailHades.address, // Assuming `allHailHades` is the deployed contract instance
+        owner.account.address, // The address of the owner, assuming `owner` is a Signer
+        iSafe.address,
+        heir.account.address, // The heir's address
+        nonce
+      );
+
+      // Attempt to execute will
+      await expect(
+        allHailHades.write.executeWill(
+          [signature, owner.account.address, iSafe.address],
+          { account: heir.account }
+        )
+      ).to.be.rejected;
+    });
+
+    it("Should reject if module is disabled", async function () {
+      const { allHailHades, owner, heir, iSafe } = await loadFixture(
+        setupFixturesWithFakeSafe
+      );
+
+      await allHailHades.write.setInhertance(
+        [iSafe.address, heir.account.address, 10000n],
+        {
+          value: 1000000000000000000n, // 1 Ether
+        }
+      );
+
+      // Fast forward 1 day
+      await time.increase(24 * 60 * 60 + 1);
+
+      // Disable module
+      await iSafe.write.disableModule([allHailHades.address]);
+
+      // Create signature
+      const nonce = await allHailHades.read.getNonce([
+        owner.account.address,
+        iSafe.address,
+      ]);
+      const signature = await sign(
+        owner, // This should be your WalletClient
+        allHailHades.address, // Assuming `allHailHades` is the deployed contract instance
+        owner.account.address, // The address of the owner, assuming `owner` is a Signer
+        iSafe.address,
+        heir.account.address, // The heir's address
+        nonce
+      );
+
+      // Attempt to execute will
+      await expect(
+        allHailHades.write.executeWill(
+          [signature, owner.account.address, iSafe.address],
+          { account: heir.account }
+        )
+      ).to.be.rejected;
+    });
   });
 });

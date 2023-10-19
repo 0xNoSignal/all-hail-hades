@@ -1,6 +1,8 @@
 import hre from "hardhat";
 import deploySingletons from "./deploySingeltons";
 import deploySafeProxy from "./deploySafeProxy";
+import execSafeTransaction from "./executeSafeTransaction";
+import { encodeFunctionData } from "viem";
 
 export async function setupFixture() {
   const [owner, heir, otherAccount] = await hre.viem.getWalletClients();
@@ -23,6 +25,23 @@ export async function setupFixture() {
   const allHailHades = await hre.viem.deployContract("AllHailHades");
 
   await iSafe.write.enableModule([allHailHades.address as `0x${string}`]);
+
+  const data = encodeFunctionData({
+    abi: iSafe.abi,
+    functionName: "enableModule",
+    args: [allHailHades.address as `0x${string}`],
+  });
+
+  await execSafeTransaction(
+    iSafe,
+    {
+      to: iSafe.address,
+      data,
+      value: 0,
+    },
+    owner,
+    owner.account.address
+  );
 
   return {
     allHailHades,

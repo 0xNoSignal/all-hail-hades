@@ -113,7 +113,7 @@ contract AllHailHades is EIP712 {
         address _deceased,
         address payable _safe
     ) public {
-        // require(Safe(_safe).isModuleEnabled(address(this)), "Module disabled");
+        require(Safe(_safe).isModuleEnabled(address(this)), "Module disabled");
         Will storage will = wills[_deceased][_safe];
 
         //Checks
@@ -121,14 +121,15 @@ contract AllHailHades is EIP712 {
             getSigner(will.heir, _safe, will.nonce, _signature) == _deceased,
             "Invalid signature"
         );
+
         require(
-            will.startedAt + will.timeframe > block.timestamp,
+            will.startedAt + will.timeframe < block.timestamp,
             "You can not claim yet"
         );
         require(will.tip <= address(this).balance, "Not enough funds");
         require(userNonce[_deceased][_safe] == will.nonce, "Invalid nonce");
 
-        // Safe(_safe).swapOwner(_deceased, _deceased, will.heir);
+        Safe(_safe).swapOwner(_deceased, _deceased, will.heir);
 
         // Effects
         uint256 tipAmount = will.tip;
