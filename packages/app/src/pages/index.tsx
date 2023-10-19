@@ -5,34 +5,62 @@ import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { signTypedData } from "@wagmi/core";
 import { domain, message, types } from "@/utils";
 import SafeApiKit from "@safe-global/api-kit";
-import { useEthersProvider } from "@/hooks/ethers";
 import { EthersAdapter } from "@safe-global/protocol-kit";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
+import Safe from "@safe-global/protocol-kit";
+import { useEthersSigner } from "@/hooks/ethers";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const { open } = useWeb3Modal();
   const { address } = useAccount();
+  const signer = useEthersSigner();
 
-  const infuraProvider = ethers.getDefaultProvider("homestead", {
-    infura: "https://mainnet.infura.io/v3/31a1879c790c5a01028f8eb0571096df",
-  });
+  const provider = new ethers.providers.InfuraProvider(
+    "goerli",
+    process.env.INFURA_API_KEY
+  );
 
   const ethAdapter = new EthersAdapter({
-    signerOrProvider: infuraProvider,
+    signerOrProvider: provider,
     ethers,
   });
 
   const safeService = new SafeApiKit({
-    txServiceUrl: "https://safe-transaction-mainnet.safe.global",
+    txServiceUrl: "https://safe-transaction-goerli.safe.global",
     ethAdapter,
   });
 
   if (address) {
-    const test = safeService.getSafesByOwner(address).then((res) => {
+    const test = safeService.getSafesByOwner(address).then(async (res) => {
       console.log(res, "safe results");
+      const [firstSafe] = res.safes;
+
+      if (!firstSafe) {
+        return;
+      }
+
+      const safeSdk: Safe = await Safe.create({
+        ethAdapter: ethAdapter,
+        safeAddress: firstSafe,
+      });
+
+      const ethAdapterOwner2 = new EthersAdapter({
+        ethers,
+        signerOrProvider: signer, // TODO: use signer from web3modal
+      });
+
+      const safeTransaction = await safeSdk.createEnableModuleTx(
+        "0x5ce7E62e2d205aa3227982e707531e2e68abe522"
+      );
+      // const txResponse = await safeSdk.executeTransaction(safeTransaction);
+      // const response = await txResponse.transactionResponse?.wait();
+
+      console.log(safeTransaction, "safeTransaction");
+      // console.log(txResponse, "txResponse");
+      // console.log(response, "res");
     });
   }
 
