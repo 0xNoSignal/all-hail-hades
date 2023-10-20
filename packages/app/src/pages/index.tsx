@@ -38,10 +38,7 @@ import SetInheritance from "../components/SetInheritance";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const ENCRYPTED_MESSAGE = "Hello World";
-const SAFE_ADDRESS = "0x6617a5D85F6960f72a78A89Edce080184360D54F";
-const MODULE_ADDRESS = "0xdfb72936feaca3255d4f2d967680930158d75c42";
-const RANDOM_HEIR = "0xC3a2580b2eeA35d1e56B655F176c1Eb10CDae51a";
+export const MODULE_ADDRESS = "0xdfb72936feaca3255d4f2d967680930158d75c42";
 
 export default function Home() {
   const toast = useToast();
@@ -125,84 +122,6 @@ export default function Home() {
     }
     return mySafes;
   }, [mySafes, isModuleEnabled]);
-
-  const setInhertiance = async () => {
-    const nonce = (await readContract({
-      address: MODULE_ADDRESS,
-      abi: helpers.ALL_HAIL_HADES_ABI,
-      functionName: "getNonce",
-      args: [address, SAFE_ADDRESS],
-    })) as bigint;
-
-    console.log("nonce", nonce);
-
-    if (!address) {
-      throw new Error("No address");
-    }
-
-    if (!heir) {
-      throw new Error("No heir");
-    }
-    const walletClient = (await getWalletClient()) as WalletClient;
-
-    const signature = await helpers.sign(
-      walletClient, // This should be your WalletClient
-      MODULE_ADDRESS, // Assuming `allHailHades` is the deployed contract instance
-      address, // The address of the owner, assuming `owner` is a Signer
-      SAFE_ADDRESS,
-      heir as `0x${string}`, // The heir's address
-      nonce
-    );
-
-    console.log("signature", signature);
-
-    const chain = "ethereum";
-    const authSig = await LitJsSdk.checkAndSignAuthMessage({
-      chain,
-    });
-
-    const accessControlConditions = [
-      {
-        contractAddress:
-          "ipfs://QmTctzQiRG3wdzs9e5Proq2zKtC8ShrrsAYrQqRSJNsUrZ",
-        standardContractType: "LitAction",
-        chain: "ethereum",
-        method: "go",
-        parameters: ["40"],
-        returnValueTest: {
-          comparator: "=",
-          value: "true",
-        },
-      },
-    ];
-    const { ciphertext, dataToEncryptHash } = await LitJsSdk.encryptString(
-      {
-        accessControlConditions,
-        authSig,
-        chain,
-        dataToEncrypt: signature,
-      },
-      litNodeClient
-    );
-
-    console.log("ciphertext", ciphertext);
-    console.log("dataToEncryptHash", dataToEncryptHash);
-
-    if (!timeframe) {
-      throw new Error("No timeframe");
-    }
-
-    const { request } = await prepareWriteContract({
-      address: MODULE_ADDRESS,
-      abi: helpers.ALL_HAIL_HADES_ABI,
-      functionName: "setInhertance",
-      args: [SAFE_ADDRESS, heir, timeframe, ciphertext, dataToEncryptHash],
-      value: parseEther("0.0001"),
-    });
-    const { hash } = await writeContract(request);
-
-    console.log("hash", hash);
-  };
 
   const deployModuleAction = async (firstSafe: string) => {
     if (!signer) {
@@ -295,7 +214,11 @@ export default function Home() {
                   </Th>
                   <Th border="0">
                     {typeof safe !== "string" && (
-                      <SetInheritance safe={safe.address} />
+                      <SetInheritance
+                        safe={safe.address}
+                        walletAddress={address}
+                        litNodeClient={litNodeClient}
+                      />
                     )}
                   </Th>
                 </Tr>
