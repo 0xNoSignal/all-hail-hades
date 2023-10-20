@@ -407,3 +407,48 @@ export const ALL_HAIL_HADES_ABI = [
     type: "function",
   },
 ];
+
+export const SAFE_ABI_LIGHT = [
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "module",
+        type: "address",
+      },
+    ],
+    name: "isModuleEnabled",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "prevOwner",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "oldOwner",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "swapOwner",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+];
