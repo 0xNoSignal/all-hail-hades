@@ -23,8 +23,18 @@ import { useEffect, useMemo, useState } from "react";
 import * as LitJsSdk from "@lit-protocol/lit-node-client";
 import * as helpers from "../helpers";
 import { parseEther } from "viem";
-import { Box, Text, Tooltip, Button } from "@chakra-ui/react";
+import {
+  Box,
+  Text,
+  Tooltip,
+  Button,
+  Tbody,
+  Tr,
+  Th,
+  Table,
+} from "@chakra-ui/react";
 import { useToast } from "@chakra-ui/react";
+import SetInheritance from "../components/SetInheritance";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -241,72 +251,58 @@ export default function Home() {
         <w3m-button />
         {listToUse.map((safe) => (
           <Box
+            key={typeof safe === "string" ? safe : safe.address}
             pos="relative"
-            p={3}
-            border="1px solid"
-            borderColor={"whiteAlpha.200"}
-            color="whiteAlpha.800"
             borderRadius={15}
             mx={3}
             my={4}
+            border="1px solid"
+            borderColor={"whiteAlpha.300"}
           >
-            <Text
-              color="#12ff80"
-              fontWeight={600}
-              pos="absolute"
-              top={-3}
-              left={9}
-            >
-              SAFE
-            </Text>
-            {typeof safe !== "string" && safe && (
-              <Box pos="absolute" top={-3}>
-                <Tooltip label="Is Hades Module Enabled?">
-                  <Text>{safe.isEnabled ? "🟢" : "🔴"}</Text>
-                </Tooltip>
-              </Box>
-            )}
-            {typeof safe === "string" ? safe : safe.address}
-            {typeof safe !== "string" && !safe.isEnabled && (
-              <Button
-                bg="#12ff80"
-                mx={4}
-                size={"sm"}
-                onClick={() => deployModuleAction(safe.address)}
-              >
-                Enable Module
-              </Button>
-            )}
+            <Table border="0">
+              <Tbody border="0">
+                <Tr border="0">
+                  <Text
+                    color="#12ff80"
+                    fontWeight={600}
+                    pos="absolute"
+                    top={-3}
+                    left={9}
+                  >
+                    SAFE
+                  </Text>
+                  {typeof safe !== "string" && safe && (
+                    <Box pos="absolute" top={-3} left={3}>
+                      <Tooltip label="Is Hades Module Enabled?">
+                        <Text>{safe.isEnabled ? "🟢" : "🔴"}</Text>
+                      </Tooltip>
+                    </Box>
+                  )}
+                  <Th border="0">
+                    {typeof safe === "string" ? safe : safe.address}
+                  </Th>
+                  <Th border="0">
+                    {typeof safe !== "string" && !safe.isEnabled && (
+                      <Button
+                        bg="#12ff80"
+                        mx={4}
+                        size={"sm"}
+                        onClick={() => deployModuleAction(safe.address)}
+                      >
+                        Enable Module
+                      </Button>
+                    )}
+                  </Th>
+                  <Th border="0">
+                    {typeof safe !== "string" && (
+                      <SetInheritance safe={safe.address} />
+                    )}
+                  </Th>
+                </Tr>
+              </Tbody>
+            </Table>
           </Box>
         ))}
-        <Box color="white">
-          {isConnected && (
-            <div>
-              <div>
-                <h3>Set Inhertiance</h3>
-                <label>HEIR:</label>
-                <input
-                  placeholder="heir"
-                  onChange={(e) => {
-                    setHeir(e?.target?.value);
-                  }}
-                ></input>
-              </div>
-              <div>
-                <label>Timeframe after considered dead:</label>
-                <i>in seconds</i>
-                <input
-                  placeholder="Timeframe"
-                  type="number"
-                  onChange={(e) => {
-                    setTimeframe(Number(e?.target?.value));
-                  }}
-                ></input>
-              </div>
-              <button onClick={setInhertiance}>Set Inhertiance</button>
-            </div>
-          )}
-        </Box>
       </main>
     </>
   );
