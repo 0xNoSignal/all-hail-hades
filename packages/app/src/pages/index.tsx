@@ -33,7 +33,7 @@ export default function Home() {
     ethAdapter,
   });
 
-  if (address) {
+  if (address && signer) {
     const test = safeService.getSafesByOwner(address).then(async (res) => {
       console.log(res, "safe results");
       const [firstSafe] = res.safes;
@@ -49,18 +49,28 @@ export default function Home() {
 
       const ethAdapterOwner2 = new EthersAdapter({
         ethers,
-        signerOrProvider: signer, // TODO: use signer from web3modal
+        signerOrProvider: signer,
       });
 
-      const safeTransaction = await safeSdk.createEnableModuleTx(
+      const safeSdk2 = await safeSdk.connect({
+        ethAdapter: ethAdapterOwner2,
+        safeAddress: firstSafe,
+      });
+
+      const safeTransaction = await safeSdk2.createEnableModuleTx(
         "0x5ce7E62e2d205aa3227982e707531e2e68abe522"
       );
-      // const txResponse = await safeSdk.executeTransaction(safeTransaction);
-      // const response = await txResponse.transactionResponse?.wait();
 
-      console.log(safeTransaction, "safeTransaction");
-      // console.log(txResponse, "txResponse");
-      // console.log(response, "res");
+      // const txHash = await safeSdk2.getTransactionHash(safeTransaction);
+      // const approveTxResponse = await safeSdk2.approveTransactionHash(txHash);
+      // await approveTxResponse.transactionResponse?.wait();
+
+      const txResponse = await safeSdk2.executeTransaction(safeTransaction);
+      const response = await txResponse.transactionResponse?.wait();
+
+      // console.log(safeTransaction, "safeTransaction");
+      console.log(txResponse, "txResponse");
+      console.log(response, "res");
     });
   }
 
