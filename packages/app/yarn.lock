@@ -1526,6 +1526,11 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
+"@fontsource/unifrakturcook@^5.0.16":
+  version "5.0.16"
+  resolved "https://registry.yarnpkg.com/@fontsource/unifrakturcook/-/unifrakturcook-5.0.16.tgz#09b32ad2879cad24f49078914ec045658ef1c461"
+  integrity sha512-/yC5mLiyvkIWj4++Ipzgo1iNvqwXa8BgWh9XN3L18hVuU9guTwc8RDMC2pKcqlNKygo/xrua4v8Ts/o6ubuspg==
+
 "@ipld/dag-cbor@^6.0.3":
   version "6.0.15"
   resolved "https://registry.yarnpkg.com/@ipld/dag-cbor/-/dag-cbor-6.0.15.tgz#aebe7a26c391cae98c32faedb681b1519e3d2372"

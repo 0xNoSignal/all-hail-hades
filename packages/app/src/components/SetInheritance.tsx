@@ -200,7 +200,7 @@ export default function SetInheritance({
         finalFocusRef={btnRef}
       >
         <DrawerOverlay />
-        <DrawerContent>
+        <DrawerContent color="white" bg="#202020">
           <DrawerCloseButton />
           <DrawerHeader>
             <Heading>Set Inhertiance</Heading>
@@ -248,12 +248,12 @@ export default function SetInheritance({
           </DrawerBody>
 
           <DrawerFooter>
-            <Button variant="outline" mr={3} onClick={onClose}>
+            <Button color="white" variant="outline" mr={3} onClick={onClose}>
               Cancel
             </Button>
             <Button
               onClick={setInhertiance}
-              bg="#12ff80"
+              bg="#F82900"
               isDisabled={isDisabled}
             >
               LFG
