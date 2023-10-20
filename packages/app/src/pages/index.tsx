@@ -33,47 +33,6 @@ export default function Home() {
     ethAdapter,
   });
 
-  if (address && signer) {
-    const test = safeService.getSafesByOwner(address).then(async (res) => {
-      console.log(res, "safe results");
-      const [firstSafe] = res.safes;
-
-      if (!firstSafe) {
-        return;
-      }
-
-      const safeSdk: Safe = await Safe.create({
-        ethAdapter: ethAdapter,
-        safeAddress: firstSafe,
-      });
-
-      const ethAdapterOwner2 = new EthersAdapter({
-        ethers,
-        signerOrProvider: signer,
-      });
-
-      const safeSdk2 = await safeSdk.connect({
-        ethAdapter: ethAdapterOwner2,
-        safeAddress: firstSafe,
-      });
-
-      const safeTransaction = await safeSdk2.createEnableModuleTx(
-        "0x5ce7E62e2d205aa3227982e707531e2e68abe522"
-      );
-
-      // const txHash = await safeSdk2.getTransactionHash(safeTransaction);
-      // const approveTxResponse = await safeSdk2.approveTransactionHash(txHash);
-      // await approveTxResponse.transactionResponse?.wait();
-
-      const txResponse = await safeSdk2.executeTransaction(safeTransaction);
-      const response = await txResponse.transactionResponse?.wait();
-
-      // console.log(safeTransaction, "safeTransaction");
-      console.log(txResponse, "txResponse");
-      console.log(response, "res");
-    });
-  }
-
   const signMessageAction = async () => {
     const signature = await signTypedData({
       domain,
@@ -81,6 +40,43 @@ export default function Home() {
       primaryType: "Inheritance",
       types,
     });
+  };
+
+  const deployModuleAction = async () => {
+    if (address && signer) {
+      safeService.getSafesByOwner(address).then(async (res) => {
+        const [firstSafe] = res.safes;
+
+        if (!firstSafe) {
+          return;
+        }
+
+        const safeSdk: Safe = await Safe.create({
+          ethAdapter: ethAdapter,
+          safeAddress: firstSafe,
+        });
+
+        const ethAdapterOwner2 = new EthersAdapter({
+          ethers,
+          signerOrProvider: signer,
+        });
+
+        const safeSdk2 = await safeSdk.connect({
+          ethAdapter: ethAdapterOwner2,
+          safeAddress: firstSafe,
+        });
+
+        const safeTransaction = await safeSdk2.createEnableModuleTx(
+          "0xdfb72936fEACa3255D4F2d967680930158D75c42"
+        );
+        const txResponse = await safeSdk2.executeTransaction(safeTransaction);
+        const response = await txResponse.transactionResponse?.wait();
+
+        // console.log(safeTransaction, "safeTransaction");
+        console.log(txResponse, "txResponse");
+        console.log(response, "res");
+      });
+    }
   };
 
   return (
@@ -100,6 +96,9 @@ export default function Home() {
         </div>
         <div className={styles.grid}>
           <button onClick={() => signMessageAction()}>Sign message</button>
+        </div>
+        <div className={styles.grid}>
+          <button onClick={() => deployModuleAction()}>Add module</button>
         </div>
       </main>
     </>
