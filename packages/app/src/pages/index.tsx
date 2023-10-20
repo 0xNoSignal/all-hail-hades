@@ -1,18 +1,6 @@
 import Head from "next/head";
 import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
-import {
-  WalletClient,
-  getAccount,
-  getWalletClient,
-  prepareWriteContract,
-  readContract,
-  readContracts,
-  signTypedData,
-  writeContract,
-} from "@wagmi/core";
-import { domain, message, types } from "@/utils";
+import { readContracts } from "@wagmi/core";
 import SafeApiKit from "@safe-global/api-kit";
 import { EthersAdapter } from "@safe-global/protocol-kit";
 import { ethers } from "ethers";
@@ -22,7 +10,6 @@ import { useEthersSigner } from "@/hooks/ethers";
 import { useEffect, useMemo, useState } from "react";
 import * as LitJsSdk from "@lit-protocol/lit-node-client";
 import * as helpers from "../helpers";
-import { parseEther } from "viem";
 import {
   Box,
   Text,
@@ -107,6 +94,8 @@ export default function Home() {
   useEffect(() => {
     if (address) {
       logSafes(address);
+    } else {
+      setMySafes([]);
     }
   }, [address]);
 
@@ -168,64 +157,65 @@ export default function Home() {
       </Head>
       <main>
         <w3m-button />
-        {listToUse.map((safe) => (
-          <Box
-            key={typeof safe === "string" ? safe : safe.address}
-            pos="relative"
-            borderRadius={15}
-            mx={3}
-            my={4}
-            border="1px solid"
-            borderColor={"whiteAlpha.300"}
-          >
-            <Table border="0">
-              <Tbody border="0">
-                <Tr border="0">
-                  <Text
-                    color="#12ff80"
-                    fontWeight={600}
-                    pos="absolute"
-                    top={-3}
-                    left={9}
-                  >
-                    SAFE
-                  </Text>
-                  {typeof safe !== "string" && safe && (
-                    <Box pos="absolute" top={-3} left={3}>
-                      <Tooltip label="Is Hades Module Enabled?">
-                        <Text>{safe.isEnabled ? "🟢" : "🔴"}</Text>
-                      </Tooltip>
-                    </Box>
-                  )}
-                  <Th border="0">
-                    {typeof safe === "string" ? safe : safe.address}
-                  </Th>
-                  <Th border="0">
-                    {typeof safe !== "string" && !safe.isEnabled && (
-                      <Button
-                        bg="#12ff80"
-                        mx={4}
-                        size={"sm"}
-                        onClick={() => deployModuleAction(safe.address)}
-                      >
-                        Enable Module
-                      </Button>
+        {address &&
+          listToUse.map((safe) => (
+            <Box
+              key={typeof safe === "string" ? safe : safe.address}
+              pos="relative"
+              borderRadius={15}
+              mx={3}
+              my={4}
+              border="1px solid"
+              borderColor={"whiteAlpha.300"}
+            >
+              <Table border="0">
+                <Tbody border="0">
+                  <Tr border="0">
+                    <Text
+                      color="#12ff80"
+                      fontWeight={600}
+                      pos="absolute"
+                      top={-3}
+                      left={9}
+                    >
+                      SAFE
+                    </Text>
+                    {typeof safe !== "string" && safe && (
+                      <Box pos="absolute" top={-3} left={3}>
+                        <Tooltip label="Is Hades Module Enabled?">
+                          <Text>{safe.isEnabled ? "🟢" : "🔴"}</Text>
+                        </Tooltip>
+                      </Box>
                     )}
-                  </Th>
-                  <Th border="0">
-                    {typeof safe !== "string" && (
-                      <SetInheritance
-                        safe={safe.address}
-                        walletAddress={address}
-                        litNodeClient={litNodeClient}
-                      />
-                    )}
-                  </Th>
-                </Tr>
-              </Tbody>
-            </Table>
-          </Box>
-        ))}
+                    <Th border="0">
+                      {typeof safe === "string" ? safe : safe.address}
+                    </Th>
+                    <Th border="0">
+                      {typeof safe !== "string" && !safe.isEnabled && (
+                        <Button
+                          bg="#12ff80"
+                          mx={4}
+                          size={"sm"}
+                          onClick={() => deployModuleAction(safe.address)}
+                        >
+                          Enable Module
+                        </Button>
+                      )}
+                    </Th>
+                    <Th border="0">
+                      {typeof safe !== "string" && (
+                        <SetInheritance
+                          safe={safe.address}
+                          walletAddress={address}
+                          litNodeClient={litNodeClient}
+                        />
+                      )}
+                    </Th>
+                  </Tr>
+                </Tbody>
+              </Table>
+            </Box>
+          ))}
       </main>
     </>
   );
