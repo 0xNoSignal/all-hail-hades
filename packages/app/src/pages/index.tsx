@@ -103,10 +103,13 @@ export default function Home() {
       const daten = await Promise.all(
         safes.map((safeaddress) => safeService.getSafeInfo(safeaddress))
       );
+      console.log("daten", daten);
 
       const feedback = daten.map((safe, index) => ({
         address: safe.address,
-        isEnabled: safe.modules.includes(MODULE_ADDRESS),
+        isEnabled: safe.modules
+          .map((s) => s.toLowerCase())
+          .includes(MODULE_ADDRESS.toLowerCase()),
         threshold: safe.threshold,
       }));
 
