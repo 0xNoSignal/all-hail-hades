@@ -12,7 +12,7 @@ describe("AllHailHades", function () {
 
       const timeframe = BigInt((await time.latest()) + 1000);
       const txHash = await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, timeframe],
+        [iSafe.address, heir.account.address, timeframe, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
@@ -44,7 +44,7 @@ describe("AllHailHades", function () {
 
       const timeframe = BigInt((await time.latest()) + 1000);
       await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, timeframe],
+        [iSafe.address, heir.account.address, timeframe, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
@@ -72,7 +72,7 @@ describe("AllHailHades", function () {
         await loadFixture(setupFixturesWithFakeSafe);
       const timenow = await time.latest();
       await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, 10000n],
+        [iSafe.address, heir.account.address, 1000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
@@ -133,7 +133,7 @@ describe("AllHailHades", function () {
       );
 
       await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, 10000n],
+        [iSafe.address, heir.account.address, 10000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
@@ -173,7 +173,7 @@ describe("AllHailHades", function () {
       );
 
       await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, 10000n],
+        [iSafe.address, heir.account.address, 10000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
@@ -208,7 +208,7 @@ describe("AllHailHades", function () {
       );
 
       await allHailHades.write.setInhertance(
-        [iSafe.address, heir.account.address, 10000n],
+        [iSafe.address, heir.account.address, 10000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
