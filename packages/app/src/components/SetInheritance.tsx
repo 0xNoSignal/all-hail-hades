@@ -203,7 +203,12 @@ export default function SetInheritance({
         <DrawerContent color="white" bg="#202020">
           <DrawerCloseButton />
           <DrawerHeader>
-            <Heading>Set Inhertiance</Heading>
+            <Heading
+              color="#912914"
+              fontFamily={"'UnifrakturCook', sans-serif;"}
+            >
+              Set Inhertiance
+            </Heading>
             <Text fontWeight={300} fontStyle={"italic"} fontSize={"sm"}>
               safe:{safe}
             </Text>
