@@ -9,9 +9,7 @@ export async function setupFixturesWithFakeSafe() {
     1n,
   ]);
 
-  const allHailHades = await hre.viem.deployContract(
-    "contracts/AllHailHades.sol:AllHailHades"
-  );
+  const allHailHades = await hre.viem.deployContract("AllHailHades");
 
   await fakeSafe.write.enableModule([allHailHades.address as `0x${string}`]);
 

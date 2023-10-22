@@ -156,7 +156,7 @@ export default function SetInheritance({
       const { request } = await prepareWriteContract({
         address: MODULE_ADDRESS,
         abi: helpers.ALL_HAIL_HADES_ABI,
-        functionName: "setInhertance",
+        functionName: "setInheritance",
         args: [safe, heir, timeframe, ciphertext, dataToEncryptHash],
         value: val,
       });
@@ -239,7 +239,7 @@ export default function SetInheritance({
               />
             </Box>
             <Box mb={2}>
-              <Text>Tip</Text>
+              <Text>Tip (in ETH)</Text>
               <Input
                 value={value}
                 onChange={(e) => {

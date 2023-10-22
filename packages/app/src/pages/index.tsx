@@ -36,7 +36,7 @@ import { getAddress } from "viem";
 import RainEffect from "../components/RainEffect";
 import Image from "next/image";
 
-export const MODULE_ADDRESS = "0xdfb72936feaca3255d4f2d967680930158d75c42";
+export const MODULE_ADDRESS = "0x99d7a84d07aa0de0d53dda1caabff61bca81c802";
 
 function shortenEthAddress(address: string) {
   if (!address || address.length !== 42) {

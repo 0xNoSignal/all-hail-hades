@@ -191,9 +191,33 @@ export const ALL_HAIL_HADES_ABI = [
         type: "address",
       },
     ],
-    name: "abortInhertiance",
+    name: "abortInheritance",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_user",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_safe",
+        type: "address",
+      },
+    ],
+    name: "doesWillExcist",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -314,7 +338,7 @@ export const ALL_HAIL_HADES_ABI = [
         type: "string",
       },
     ],
-    name: "setInhertance",
+    name: "setInheritance",
     outputs: [],
     stateMutability: "payable",
     type: "function",
@@ -338,25 +362,6 @@ export const ALL_HAIL_HADES_ABI = [
         internalType: "uint256",
         name: "",
         type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    name: "users",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
       },
     ],
     stateMutability: "view",

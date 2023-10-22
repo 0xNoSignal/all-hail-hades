@@ -11,7 +11,7 @@ describe("AllHailHades", function () {
         await loadFixture(setupFixturesWithFakeSafe);
 
       const timeframe = BigInt((await time.latest()) + 1000);
-      const txHash = await allHailHades.write.setInhertance(
+      const txHash = await allHailHades.write.setInheritance(
         [iSafe.address, heir.account.address, timeframe, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
@@ -38,31 +38,34 @@ describe("AllHailHades", function () {
   });
 
   describe("Abort Inheritance", () => {
-    it("Should allow a user to abort inheritance by increasing nonce", async () => {
+    it("Should allow a user to abort inheritance", async () => {
       const { allHailHades, owner, heir, publicClient, iSafe } =
         await loadFixture(setupFixturesWithFakeSafe);
 
       const timeframe = BigInt((await time.latest()) + 1000);
-      await allHailHades.write.setInhertance(
+      await allHailHades.write.setInheritance(
         [iSafe.address, heir.account.address, timeframe, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
         }
       );
 
-      const initialNonce = await allHailHades.read.userNonce([
+      let doesExcistBefore = (await allHailHades.read.doesWillExcist([
         owner.account.address,
         iSafe.address,
-      ]);
+      ])) as any;
 
-      const txHash = await allHailHades.write.abortInhertiance([iSafe.address]);
+      expect(doesExcistBefore).to.be.true;
+
+      const txHash = await allHailHades.write.abortInheritance([iSafe.address]);
       await publicClient.waitForTransactionReceipt({ hash: txHash });
-      const newNonce = await allHailHades.read.userNonce([
+
+      const doesExcistAfter = await allHailHades.read.doesWillExcist([
         owner.account.address,
         iSafe.address,
       ]);
 
-      expect(BigInt(newNonce)).to.equal(BigInt(initialNonce) + 1n);
+      expect(doesExcistAfter).to.be.false;
     });
   });
 
@@ -71,7 +74,7 @@ describe("AllHailHades", function () {
       const { allHailHades, owner, heir, publicClient, iSafe, otherAccount } =
         await loadFixture(setupFixturesWithFakeSafe);
       const timenow = await time.latest();
-      await allHailHades.write.setInhertance(
+      await allHailHades.write.setInheritance(
         [iSafe.address, heir.account.address, 1000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
@@ -104,7 +107,7 @@ describe("AllHailHades", function () {
         getAddress(heir.account.address)
       );
       expect(Number(wills[1])).to.be.gte(1000000000000000000); // Test tip
-      expect(Number(wills[2])).to.be.gte(10000); // Test timeframe
+      expect(Number(wills[2])).to.be.gte(1000); // Test timeframe
       expect(wills[3]).to.be.equal(nonce); // Test nonce
       expect(Number(wills[4])).to.be.equal(timenow + 1); // Test block timestamp
 
@@ -132,7 +135,7 @@ describe("AllHailHades", function () {
         setupFixturesWithFakeSafe
       );
 
-      await allHailHades.write.setInhertance(
+      await allHailHades.write.setInheritance(
         [iSafe.address, heir.account.address, 10000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
@@ -172,7 +175,7 @@ describe("AllHailHades", function () {
         setupFixturesWithFakeSafe
       );
 
-      await allHailHades.write.setInhertance(
+      await allHailHades.write.setInheritance(
         [iSafe.address, heir.account.address, 10000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
@@ -207,7 +210,7 @@ describe("AllHailHades", function () {
         setupFixturesWithFakeSafe
       );
 
-      await allHailHades.write.setInhertance(
+      await allHailHades.write.setInheritance(
         [iSafe.address, heir.account.address, 10000n, "a", "b"],
         {
           value: 1000000000000000000n, // 1 Ether
