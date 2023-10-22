@@ -1,4 +1,4 @@
-import React, { use, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Drawer,
   DrawerBody,
@@ -11,12 +11,11 @@ import {
   Input,
   Text,
   Box,
-  Tooltip,
   Heading,
   useToast,
 } from "@chakra-ui/react";
 import { useDisclosure } from "@chakra-ui/react";
-import { formatEther, isAddress, parseEther } from "viem";
+import { getAddress, isAddress, parseEther } from "viem";
 import * as LitJsSdk from "@lit-protocol/lit-node-client";
 import { MODULE_ADDRESS } from "../pages";
 import * as helpers from "../helpers";
@@ -27,7 +26,6 @@ import {
   readContract,
   writeContract,
 } from "@wagmi/core";
-import { time } from "console";
 
 export default function SetInheritance({
   safe,
@@ -110,14 +108,22 @@ export default function SetInheritance({
       chain,
     });
 
+    if (!timeframe) {
+      throw new Error("No timeframe");
+    }
+
     const accessControlConditions = [
       {
         contractAddress:
-          "ipfs://QmTctzQiRG3wdzs9e5Proq2zKtC8ShrrsAYrQqRSJNsUrZ",
+          "ipfs://QmcZpfZ4ZqPC6gpJNi7dCttKsPG4ytQrWshnKwXXaa1ui4",
         standardContractType: "LitAction",
         chain: "ethereum",
         method: "go",
-        parameters: ["40"],
+        parameters: [
+          getAddress(safe),
+          getAddress(walletAddress),
+          String(timeframe),
+        ],
         returnValueTest: {
           comparator: "=",
           value: "true",
@@ -137,9 +143,6 @@ export default function SetInheritance({
     console.log("ciphertext", ciphertext);
     console.log("dataToEncryptHash", dataToEncryptHash);
 
-    if (!timeframe) {
-      throw new Error("No timeframe");
-    }
     if (!value || typeof value !== "string") {
       toast({
         title: "No value",

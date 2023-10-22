@@ -1,0 +1,24 @@
+{
+  "name": "encryption",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lit-protocol/lit-node-client": "^3.0.14",
+    "@lit-protocol/lit-node-client-nodejs": "^3.0.14",
+    "ts-node": "^10.9.1",
+    "viem": "^1.16.6",
+    "vitest": "^0.34.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
+  }
+}
